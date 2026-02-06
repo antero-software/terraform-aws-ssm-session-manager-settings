@@ -1,4 +1,9 @@
 # KMS Key for Session Manager encryption
+import {
+  to = aws_ssm_document.session_manager_prefs
+  id = "SSM-SessionManagerRunShell"
+}
+
 resource "aws_kms_key" "session_logs" {
   description             = "${var.name_prefix}-ssm-session-logs"
   deletion_window_in_days = 10
