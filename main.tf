@@ -132,7 +132,7 @@ resource "aws_ssm_document" "session_manager_prefs" {
     inputs = {
       s3BucketName                = aws_s3_bucket.session_logs.id
       s3KeyPrefix                 = ""
-      s3EncryptionEnabled         = true
+      s3EncryptionEnabled         = var.enable_kms
       cloudWatchLogGroupName      = aws_cloudwatch_log_group.session_logs.name
       cloudWatchEncryptionEnabled = var.enable_kms
       cloudWatchStreamingEnabled  = false
