@@ -1,3 +1,41 @@
+data "aws_caller_identity" "current" {}
+data "aws_region" "current" {}
+
+data "aws_iam_policy_document" "session_logs_kms" {
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "Allow CloudWatch Logs"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["logs.${data.aws_region.current.name}.amazonaws.com"]
+    }
+    actions = [
+      "kms:Encrypt*",
+      "kms:Decrypt*",
+      "kms:ReEncrypt*",
+      "kms:GenerateDataKey*",
+      "kms:Describe*"
+    ]
+    resources = ["*"]
+    condition {
+      test     = "ArnLike"
+      variable = "kms:EncryptionContext:aws:logs:arn"
+      values   = ["arn:aws:logs:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:log-group:${var.name_prefix}-ssm-session-logs"]
+    }
+  }
+}
+
 # KMS Key for Session Manager encryption
 resource "aws_kms_key" "session_logs" {
   description             = "${var.name_prefix}-ssm-session-logs"
@@ -6,6 +44,7 @@ resource "aws_kms_key" "session_logs" {
   tags = {
     Name = "${var.name_prefix}-ssm-session-logs"
   }
+  policy = data.aws_iam_policy_document.session_logs_kms.json
 }
 
 resource "aws_kms_alias" "session_logs" {
@@ -17,6 +56,7 @@ resource "aws_kms_alias" "session_logs" {
 resource "aws_cloudwatch_log_group" "session_logs" {
   name              = "${var.name_prefix}-ssm-session-logs"
   retention_in_days = var.log_group_retention_days
+  kms_key_id        = aws_kms_key.session_logs.arn
 
   tags = {
     Name = "${var.name_prefix}-ssm-session-logs"
