@@ -10,5 +10,5 @@ output "cloudwatch_log_group_arn" {
 
 output "kms_key_arn" {
   description = "ARN of the KMS key for session encryption"
-  value       = aws_kms_key.session_logs.arn
+  value       = try(aws_kms_key.session_logs[0].arn, "")
 }

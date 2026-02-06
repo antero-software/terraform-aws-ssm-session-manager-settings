@@ -14,3 +14,9 @@ variable "s3_lifecycle_expiration_days" {
   type        = number
   default     = 365
 }
+
+variable "enable_kms" {
+  description = "Enable KMS encryption for Session Manager logs."
+  type        = bool
+  default     = false
+}

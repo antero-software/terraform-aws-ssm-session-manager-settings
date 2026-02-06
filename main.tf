@@ -2,6 +2,7 @@ data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
 data "aws_iam_policy_document" "session_logs_kms" {
+  count = var.enable_kms ? 1 : 0
   statement {
     sid    = "Enable IAM User Permissions"
     effect = "Allow"
@@ -38,25 +39,27 @@ data "aws_iam_policy_document" "session_logs_kms" {
 
 # KMS Key for Session Manager encryption
 resource "aws_kms_key" "session_logs" {
+  count                   = var.enable_kms ? 1 : 0
   description             = "${var.name_prefix}-ssm-session-logs"
   deletion_window_in_days = 10
 
   tags = {
     Name = "${var.name_prefix}-ssm-session-logs"
   }
-  policy = data.aws_iam_policy_document.session_logs_kms.json
+  policy = data.aws_iam_policy_document.session_logs_kms[0].json
 }
 
 resource "aws_kms_alias" "session_logs" {
+  count         = var.enable_kms ? 1 : 0
   name          = "alias/${var.name_prefix}-ssm-session-logs"
-  target_key_id = aws_kms_key.session_logs.key_id
+  target_key_id = aws_kms_key.session_logs[0].key_id
 }
 
 # CloudWatch Log Group for Session Manager logs
 resource "aws_cloudwatch_log_group" "session_logs" {
   name              = "${var.name_prefix}-ssm-session-logs"
   retention_in_days = var.log_group_retention_days
-  kms_key_id        = aws_kms_key.session_logs.arn
+  kms_key_id        = var.enable_kms ? aws_kms_key.session_logs[0].arn : null
 
   tags = {
     Name = "${var.name_prefix}-ssm-session-logs"
@@ -131,9 +134,9 @@ resource "aws_ssm_document" "session_manager_prefs" {
       s3KeyPrefix                 = ""
       s3EncryptionEnabled         = true
       cloudWatchLogGroupName      = aws_cloudwatch_log_group.session_logs.name
-      cloudWatchEncryptionEnabled = true
+      cloudWatchEncryptionEnabled = var.enable_kms
       cloudWatchStreamingEnabled  = false
-      kmsKeyId                    = aws_kms_key.session_logs.arn
+      kmsKeyId                    = var.enable_kms ? aws_kms_key.session_logs[0].arn : ""
       runAsEnabled                = false
       runAsDefaultUser            = ""
     }
