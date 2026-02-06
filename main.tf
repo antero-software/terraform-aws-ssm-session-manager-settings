@@ -2,7 +2,6 @@
 resource "aws_kms_key" "session_logs" {
   description             = "${var.name_prefix}-ssm-session-logs"
   deletion_window_in_days = 10
-  enable_key_rotation     = true
 
   tags = {
     Name = "${var.name_prefix}-ssm-session-logs"
@@ -17,7 +16,7 @@ resource "aws_kms_alias" "session_logs" {
 # CloudWatch Log Group for Session Manager logs
 resource "aws_cloudwatch_log_group" "session_logs" {
   name              = "${var.name_prefix}-ssm-session-logs"
-  retention_in_days = 30
+  retention_in_days = var.log_group_retention_days
 
   tags = {
     Name = "${var.name_prefix}-ssm-session-logs"
@@ -72,7 +71,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "session_logs" {
     status = "Enabled"
 
     expiration {
-      days = 365
+      days = var.s3_lifecycle_expiration_days
     }
   }
 }
