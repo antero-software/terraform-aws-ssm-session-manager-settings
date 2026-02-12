@@ -137,7 +137,7 @@ resource "aws_ssm_document" "session_manager_prefs" {
       cloudWatchEncryptionEnabled = var.enable_kms
       cloudWatchStreamingEnabled  = false
       kmsKeyId                    = var.enable_kms ? aws_kms_key.session_logs[0].arn : ""
-      runAsEnabled                = true
+      runAsEnabled                = var.enable_run_as
       runAsDefaultUser            = ""
     }
   })

@@ -20,3 +20,9 @@ variable "enable_kms" {
   type        = bool
   default     = false
 }
+
+variable "enable_run_as" {
+  description = "Enable Run As for Session Manager."
+  type        = bool
+  default     = false
+}
